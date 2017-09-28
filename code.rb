@@ -77,6 +77,11 @@ def build_light_node
   clone_node(LIGHT_NODE)
 end
 
+# gate output is output 0
+def build_clock_node
+  clone_node(CLOCK_NODE)
+end
+
 def add_node(patch, node)
   patch['nodes'] << node
   patch
@@ -123,7 +128,11 @@ def build_conway_patch(m, n)
   end
   puts "done."
 
-  #wire_output_to_input(patch, conway_nodes[0], 0, conway_nodes[1], 8)
+  clock = build_clock_node
+  add_node(patch, clock)
+  conway_nodes.each do |node|
+    wire_output_to_input(patch, clock, 0, node, 0)
+  end
 
   doc
 end
@@ -197,3 +206,5 @@ position:
   x: 0.0
   y: 0.0
 YAML
+
+CLOCK_NODE = JSON.parse(File.read('clock.json'))
