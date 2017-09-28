@@ -93,6 +93,10 @@ def build_clock_node
   clone_node(CLOCK_NODE)
 end
 
+def build_input_node
+  clone_node(INPUT_NODE)
+end
+
 def add_node(patch, node)
   patch['nodes'] << node
   patch
@@ -200,11 +204,13 @@ def build_conway_grid_patch(width, height)
     wire_output_to_input(patch, conway_node, 0, light_node, 0)
   end
 
-  # CLOCK NODE
-  clock = build_clock_node
-  add_node(patch, clock)
+  # INPUT NODE
+  input = build_input_node
+  input["name"] = "clock"
+  add_node(patch, input)
+
   conway_nodes.each do |node|
-    wire_output_to_input(patch, clock, 0, node, 0)
+    wire_output_to_input(patch, input, 0, node, 0)
   end
 
   patch
@@ -216,6 +222,11 @@ def build_conway_patch(width, height)
   subpatch = build_subpatch_node
   subpatch['subPatch'] = build_conway_grid_patch(width, height)
   add_node(patch, subpatch)
+
+  # CLOCK NODE
+  clock = build_clock_node
+  add_node(patch, clock)
+  wire_output_to_input(patch, clock, 0, subpatch, 0)
 
   doc
 end
@@ -306,6 +317,22 @@ TRIGGER_NODE = JSON.parse <<JSON
   },
   "toggle": false,
   "state": false
+}
+JSON
+
+INPUT_NODE = JSON.parse <<JSON
+{
+  "type": "Input",
+  "id": "3e8e612d-3b7a-4c6d-a2ea-2e5f1a00161d",
+  "position": {
+    "x": 0,
+    "y": 0
+  },
+  "exposedPosition": {
+    "x": 0,
+    "y": 0
+  },
+  "name": "input"
 }
 JSON
 
