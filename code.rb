@@ -60,11 +60,17 @@ def clone_node_helper(node, uuid_map)
 end
 
 def build_init_doc
-  clone_node(INIT_PATCH)
+  print "building init doc.."
+  result = clone_node(INIT_PATCH)
+  puts "done."
+  result
 end
 
 def build_conway_node
-  clone_node(CONWAY_PATCH)
+  print "building conway node.."
+  result = clone_node(CONWAY_PATCH)
+  puts "done."
+  result
 end
 
 def build_light_node
@@ -76,22 +82,34 @@ def add_node(patch, node)
   patch
 end
 
-def distribute_nodes_horizontally(patch)
-  patch['nodes'].each_with_index do |node, i|
-    node['position']['x'] = i * 100
-  end
-
-  patch
-end
-
 def build_conway_patch(m, n)
   doc = build_init_doc()
   patch = doc['patch']
-  12.times do
-    add_node(patch, build_conway_node())
-  end
 
-  distribute_nodes_horizontally(patch)
+  conway_nodes =
+    n.times.flat_map {|row|
+      print "building row #{row}.."
+      nodes =
+        m.times.map {|column| # columns
+          build_conway_node()
+        }
+
+      nodes.each_with_index do |node, column|
+        node['position']['x'] = column * 160
+      end
+      nodes.each do |node|
+        node['position']['y'] = row * 170
+      end
+
+      puts "done."
+      nodes
+    }
+
+  print "adding (#{conway_nodes.count}) nodes"
+  conway_nodes.each do |node|
+    print "."
+    add_node(patch, node)
+  end
 
   doc
 end
