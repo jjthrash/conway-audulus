@@ -134,6 +134,31 @@ def build_conway_patch(width, height)
   end
   puts "done."
 
+  light_node_width = 100
+  light_node_height = 50
+  light_nodes =
+    height.times.flat_map {|row|
+      nodes =
+        width.times.map {|column|
+          build_light_node
+        }
+
+      nodes.each_with_index do |node, column|
+        node['position']['x'] = width * conway_node_width + 100 + light_node_width * column
+      end
+      nodes.each do |node|
+        node['position']['y'] = (height - row) * light_node_height
+      end
+    }
+
+  light_nodes.each do |node|
+    add_node(patch, node)
+  end
+
+  conway_nodes.zip(light_nodes) do |conway_node, light_node|
+    wire_output_to_input(patch, conway_node, 0, light_node, 0)
+  end
+
   clock = build_clock_node
   add_node(patch, clock)
   conway_nodes.each do |node|
