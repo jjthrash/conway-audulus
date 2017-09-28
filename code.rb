@@ -98,7 +98,7 @@ def build_conway_patch(m, n)
         node['position']['x'] = column * 160
       end
       nodes.each do |node|
-        node['position']['y'] = row * 170
+        node['position']['y'] = row * -170
       end
 
       puts "done."
@@ -110,8 +110,60 @@ def build_conway_patch(m, n)
     print "."
     add_node(patch, node)
   end
+  puts "done."
+
+  print "wiring outputs"
+  conway_nodes.each do |node|
+    print "."
+    neighbor_nodes(conway_nodes, m, node).each_with_index do |neighbor, i|
+      if neighbor
+        wire_output_to_input(patch, node, 0, neighbor, i+1)
+      end
+    end
+  end
+  puts "done."
+
+  #wire_output_to_input(patch, conway_nodes[0], 0, conway_nodes[1], 8)
 
   doc
+end
+
+# return array of surrounding neighbors, starting bottom right going CW
+# nil if no neighbor there
+NEIGHBOR_POSITIONS = [
+  [1,1], #br
+  [0,1],
+  [-1,1],
+  [-1,0],
+  [-1,-1], #tl
+  [0,-1],
+  [1,-1],
+  [1,0],
+]
+
+def neighbor_nodes(conway_nodes, stride, node)
+  index = conway_nodes.index(node)
+  row = index / stride
+  column = index - row * stride
+  NEIGHBOR_POSITIONS.map {|relative_column, relative_row|
+    neighbor_row = row + relative_row
+    neighbor_column = column + relative_column
+    if neighbor_row < 0 || neighbor_row >= conway_nodes.count / stride ||
+        neighbor_column < 0 || neighbor_column >= stride
+      next nil
+    end
+
+    conway_nodes[neighbor_column + neighbor_row * stride]
+  }
+end
+
+def wire_output_to_input(patch, source_node, source_output, destination_node, destination_input)
+  patch['wires'] << {
+    "from" => source_node['id'],
+    "output" => source_output,
+    "to" => destination_node['id'],
+    "input": destination_input
+  }
 end
 
 """
