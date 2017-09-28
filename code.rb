@@ -282,13 +282,6 @@ def wire_output_to_input(patch, source_node, source_output, destination_node, de
   }
 end
 
-"""
-Notes:
-
-- when wiring inputs to outputs, the wire connects patches together, then specifies which numbered input or output,
-  presumably based on order of appearance
-"""
-
 INIT_PATCH = YAML.load <<YAML
 ---
 version: 1
