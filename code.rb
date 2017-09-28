@@ -303,7 +303,7 @@ patch:
 YAML
 
 
-CONWAY_PATCH = JSON.parse(File.read('Conway.audulus'))['patch']['nodes'][0]
+CONWAY_PATCH = JSON.parse(File.read('conway_node.audulus'))['patch']['nodes'][0]
 
 LIGHT_NODE = YAML.load <<YAML
 ---
