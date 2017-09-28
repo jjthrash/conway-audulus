@@ -80,6 +80,10 @@ def build_light_node
   clone_node(LIGHT_NODE)
 end
 
+def build_trigger_node
+  clone_node(TRIGGER_NODE)
+end
+
 # gate output is output 0
 def build_clock_node
   clone_node(CLOCK_NODE)
@@ -157,6 +161,31 @@ def build_conway_patch(width, height)
 
   conway_nodes.zip(light_nodes) do |conway_node, light_node|
     wire_output_to_input(patch, conway_node, 0, light_node, 0)
+  end
+
+  trigger_node_width = 150
+  trigger_node_height = 50
+  trigger_nodes =
+    height.times.flat_map {|row|
+      nodes =
+        width.times.map {|column|
+          build_trigger_node
+        }
+
+      nodes.each_with_index do |node, column|
+        node['position']['x'] = width * -trigger_node_width - 100 + light_node_width * column
+      end
+      nodes.each do |node|
+        node['position']['y'] = (height - row) * trigger_node_height
+      end
+    }
+
+  trigger_nodes.each do |node|
+    add_node(patch, node)
+  end
+
+  conway_nodes.zip(trigger_nodes) do |conway_node, trigger_node|
+    wire_output_to_input(patch, trigger_node, 0, conway_node, 9)
   end
 
   clock = build_clock_node
@@ -237,5 +266,18 @@ position:
   x: 0.0
   y: 0.0
 YAML
+
+TRIGGER_NODE = JSON.parse <<JSON
+{
+  "type": "Trigger",
+  "id": "3e8e612d-3b7a-4c6d-a2ea-2e5f1a00161d",
+  "position": {
+    "x": 0,
+    "y": 0
+  },
+  "toggle": false,
+  "state": false
+}
+JSON
 
 CLOCK_NODE = JSON.parse(File.read('clock.json'))
