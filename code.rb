@@ -84,6 +84,10 @@ def build_trigger_node
   clone_node(TRIGGER_NODE)
 end
 
+def build_subpatch_node
+  clone_node(SUBPATCH_NODE)
+end
+
 # gate output is output 0
 def build_clock_node
   clone_node(CLOCK_NODE)
@@ -94,13 +98,13 @@ def add_node(patch, node)
   patch
 end
 
-def build_conway_patch(width, height)
+def build_conway_grid_patch(width, height)
   doc = build_init_doc()
   patch = doc['patch']
 
+  # CONWAY NODES
   conway_node_width = 160
   conway_node_height = 170
-
   conway_nodes =
     height.times.flat_map {|row|
       print "building row #{row}.."
@@ -138,31 +142,7 @@ def build_conway_patch(width, height)
   end
   puts "done."
 
-  light_node_width = 100
-  light_node_height = 50
-  light_nodes =
-    height.times.flat_map {|row|
-      nodes =
-        width.times.map {|column|
-          build_light_node
-        }
-
-      nodes.each_with_index do |node, column|
-        node['position']['x'] = width * conway_node_width + 100 + light_node_width * column
-      end
-      nodes.each do |node|
-        node['position']['y'] = (height - row) * light_node_height
-      end
-    }
-
-  light_nodes.each do |node|
-    add_node(patch, node)
-  end
-
-  conway_nodes.zip(light_nodes) do |conway_node, light_node|
-    wire_output_to_input(patch, conway_node, 0, light_node, 0)
-  end
-
+  # TRIGGER NODES
   trigger_node_width = 150
   trigger_node_height = 50
   trigger_nodes =
@@ -173,10 +153,13 @@ def build_conway_patch(width, height)
         }
 
       nodes.each_with_index do |node, column|
-        node['position']['x'] = width * -trigger_node_width - 100 + light_node_width * column
+        node['position']['x'] = width * -trigger_node_width - 100 + trigger_node_width * column
+        node['exposedPosition'] = {}
+        node['exposedPosition']['x'] = column * 35
       end
       nodes.each do |node|
         node['position']['y'] = (height - row) * trigger_node_height
+        node['exposedPosition']['y'] = 35*(height - row)
       end
     }
 
@@ -188,13 +171,59 @@ def build_conway_patch(width, height)
     wire_output_to_input(patch, trigger_node, 0, conway_node, 9)
   end
 
+  # LIGHT NODES
+  light_node_width = 100
+  light_node_height = 50
+  light_nodes =
+    height.times.flat_map {|row|
+      nodes =
+        width.times.map {|column|
+          build_light_node
+        }
+
+      nodes.each_with_index do |node, column|
+        node['position']['x'] = width * conway_node_width + 100 + light_node_width * column
+        node['exposedPosition'] = {}
+        node['exposedPosition']['x'] = column * 35
+      end
+      nodes.each do |node|
+        node['position']['y'] = (height - row) * light_node_height
+        node['exposedPosition']['y'] = 35*(height - row)
+      end
+    }
+
+  light_nodes.each do |node|
+    add_node(patch, node)
+  end
+
+  conway_nodes.zip(light_nodes) do |conway_node, light_node|
+    wire_output_to_input(patch, conway_node, 0, light_node, 0)
+  end
+
+  # CLOCK NODE
   clock = build_clock_node
   add_node(patch, clock)
   conway_nodes.each do |node|
     wire_output_to_input(patch, clock, 0, node, 0)
   end
 
+  patch
+end
+
+def build_conway_patch(width, height)
+  doc = build_init_doc
+  patch = doc['patch']
+  subpatch = build_subpatch_node
+  subpatch['subPatch'] = build_conway_grid_patch(width, height)
+  add_node(patch, subpatch)
+
   doc
+end
+
+def make_subpatch_node(patch)
+  patch["type"] = "Patch"
+  patch['subPatch'] = pa
+  patch
 end
 
 # return array of surrounding neighbors, starting bottom right going CW
@@ -277,6 +306,27 @@ TRIGGER_NODE = JSON.parse <<JSON
   },
   "toggle": false,
   "state": false
+}
+JSON
+
+SUBPATCH_NODE = JSON.parse <<JSON
+{
+  "type": "Patch",
+  "id": "0fe72e0e-2616-4366-8036-f852398d1c73",
+  "position": {
+    "x": -33.04297,
+    "y": -44.77734
+  },
+  "subPatch": {
+    "id": "0e096166-2c2d-4c0e-bce3-f9c5f42ce5c5",
+    "pan": {
+      "x": 0,
+      "y": 0
+    },
+    "zoom": 1,
+    "nodes": [],
+    "wires": []
+  }
 }
 JSON
 
