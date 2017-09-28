@@ -639,14 +639,6 @@ subPatch:
     position:
       x: 178.19683837890625
       y: 147.85882568359375
-  - type: Light
-    id: b264602f-365b-48a2-9d25-9b95055a2c34
-    position:
-      x: 583.6455078125
-      y: 222.92031860351562
-    exposedPosition:
-      x: -45.0
-      y: 60.0
   - type: Trigger
     id: e1a2806d-f8bf-467b-98d9-01fa757d0344
     position:
@@ -657,6 +649,14 @@ subPatch:
       y: 60.0
     toggle: false
     state: false
+  - type: Light
+    id: b264602f-365b-48a2-9d25-9b95055a2c34
+    position:
+      x: 583.6455078125
+      y: 222.92031860351562
+    exposedPosition:
+      x: -45.0
+      y: 60.0
   - type: Add
     id: 755a71db-3c42-4b26-9553-d88e8d64f5a1
     position:
