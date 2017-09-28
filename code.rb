@@ -90,15 +90,18 @@ def add_node(patch, node)
   patch
 end
 
-def build_conway_patch(m, n)
+def build_conway_patch(width, height)
   doc = build_init_doc()
   patch = doc['patch']
 
+  conway_node_width = 160
+  conway_node_height = 170
+
   conway_nodes =
-    n.times.flat_map {|row|
+    height.times.flat_map {|row|
       print "building row #{row}.."
       nodes =
-        m.times.map {|column| # columns
+        width.times.map {|column| # columns
           build_conway_node()
         }
 
@@ -106,7 +109,7 @@ def build_conway_patch(m, n)
         node['position']['x'] = column * 160
       end
       nodes.each do |node|
-        node['position']['y'] = row * -170
+        node['position']['y'] = (height - row) * conway_node_height
       end
 
       puts "done."
@@ -123,7 +126,7 @@ def build_conway_patch(m, n)
   print "wiring outputs"
   conway_nodes.each do |node|
     print "."
-    neighbor_nodes(conway_nodes, m, node).each_with_index do |neighbor, i|
+    neighbor_nodes(conway_nodes, width, node).each_with_index do |neighbor, i|
       if neighbor
         wire_output_to_input(patch, node, 0, neighbor, i+1)
       end
