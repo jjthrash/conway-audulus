@@ -66,6 +66,9 @@ def build_init_doc
   result
 end
 
+# input 0: gate
+# input 1-8: neighbors
+# input 9: button
 def build_conway_node
   print "building conway node.."
   result = clone_node(CONWAY_PATCH)
