@@ -254,15 +254,22 @@ def neighbor_nodes(conway_nodes, stride, node)
   index = conway_nodes.index(node)
   row = index / stride
   column = index - row * stride
+  height = conway_nodes.count / stride
   NEIGHBOR_POSITIONS.map {|relative_column, relative_row|
-    neighbor_row = row + relative_row
-    neighbor_column = column + relative_column
-    if neighbor_row < 0 || neighbor_row >= conway_nodes.count / stride ||
-        neighbor_column < 0 || neighbor_column >= stride
-      next nil
+    proposed_row = row + relative_row
+    proposed_column = column + relative_column
+    if proposed_row < 0
+      proposed_row += height
+    elsif proposed_row >= height
+      proposed_row -= height
+    end
+    if proposed_column < 0
+      proposed_column += stride
+    elsif proposed_column >= stride
+      proposed_column -= stride
     end
 
-    conway_nodes[neighbor_column + neighbor_row * stride]
+    conway_nodes[proposed_column + proposed_row * stride]
   }
 end
 
