@@ -167,42 +167,9 @@ subPatch:
     exposedPosition:
       x: -95.0
       y: 0.0
-  - type: Input
-    id: b064a8da-2852-43bf-9f9c-e3b709afffcf
-    position:
-      x: -454.7121276855469
-      y: -132.2213134765625
-    name: ''
-    exposedPosition:
-      x: -45.0
-      y: 90.0
-  - type: Input
-    id: 3d4feaa7-2746-4446-8e63-6bf2c94f0cee
-    position:
-      x: -454.7121276855469
-      y: -102.2213134765625
-    name: ''
-    exposedPosition:
-      x: -45.0
-      y: 30.0
-  - type: Input
-    id: 00f8bbbf-24fb-4d35-b610-ec60491268a1
-    position:
-      x: -454.7121276855469
-      y: -72.2213134765625
-    name: ''
-    exposedPosition:
-      x: -15.0
-      y: 60.0
-  - type: Input
-    id: 7124decb-098a-468b-ad93-989e5bccfaf8
-    position:
-      x: -454.7121276855469
-      y: -42.2213134765625
-    name: ''
-    exposedPosition:
-      x: -75.0
-      y: 60.0
+
+
+
   - type: Input
     id: 1b7a019a-c902-4b6c-8bd2-3f71c5634da1
     position:
@@ -213,14 +180,32 @@ subPatch:
       x: -75.0
       y: 90.0
   - type: Input
-    id: 6f5cc4bd-cd93-4199-8d28-63834b02e1fd
+    id: b064a8da-2852-43bf-9f9c-e3b709afffcf
     position:
       x: -454.7121276855469
-      y: 17.7786865234375
+      y: -132.2213134765625
     name: ''
     exposedPosition:
-      x: -75.0
-      y: 30.0
+      x: -45.0
+      y: 90.0
+  - type: Input
+    id: 1d77b4d2-9a56-425e-b538-938cee883573
+    position:
+      x: -454.7121276855469
+      y: 77.7786865234375
+    name: ''
+    exposedPosition:
+      x: -15.0
+      y: 90.0
+  - type: Input
+    id: 00f8bbbf-24fb-4d35-b610-ec60491268a1
+    position:
+      x: -454.7121276855469
+      y: -72.2213134765625
+    name: ''
+    exposedPosition:
+      x: -15.0
+      y: 60.0
   - type: Input
     id: 933d7e40-0d81-418b-a281-7bfb27b2910d
     position:
@@ -231,14 +216,32 @@ subPatch:
       x: -15.0
       y: 30.0
   - type: Input
-    id: 1d77b4d2-9a56-425e-b538-938cee883573
+    id: 3d4feaa7-2746-4446-8e63-6bf2c94f0cee
     position:
       x: -454.7121276855469
-      y: 77.7786865234375
+      y: -102.2213134765625
     name: ''
     exposedPosition:
-      x: -15.0
-      y: 90.0
+      x: -45.0
+      y: 30.0
+  - type: Input
+    id: 6f5cc4bd-cd93-4199-8d28-63834b02e1fd
+    position:
+      x: -454.7121276855469
+      y: 17.7786865234375
+    name: ''
+    exposedPosition:
+      x: -75.0
+      y: 30.0
+  - type: Input
+    id: 7124decb-098a-468b-ad93-989e5bccfaf8
+    position:
+      x: -454.7121276855469
+      y: -42.2213134765625
+    name: ''
+    exposedPosition:
+      x: -75.0
+      y: 60.0
   - type: Patch
     id: 43344530-a83c-4044-b4e9-d893f0024871
     position:
