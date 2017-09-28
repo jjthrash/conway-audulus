@@ -1,2 +1,4 @@
 ## TODO
-- hook nodes up to a clock source
+- some sort of visualization
+- some way to use the output
+- infinite-esque grid
