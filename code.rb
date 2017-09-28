@@ -132,14 +132,6 @@ patch:
   zoom: 1.0
   nodes: []
   wires: []
-history:
-  states:
-  - id: eca2dc2c-3ec6-4f90-a280-aa686c57a946
-  current: eca2dc2c-3ec6-4f90-a280-aa686c57a946
-undoStack:
-  stack:
-  - eca2dc2c-3ec6-4f90-a280-aa686c57a946
-  current: 0
 YAML
 
 
