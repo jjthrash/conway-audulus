@@ -69,5 +69,5 @@ end
 
 if __FILE__ == $0
   require 'json'
-  File.write('interlace64.audulus', JSON.generate(build_interlace_grid_node))
+  File.write('interlace-64.audulus', JSON.generate(build_interlace_grid_node))
 end

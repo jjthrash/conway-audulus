@@ -120,5 +120,5 @@ end
 
 if __FILE__ == $0
   require 'json'
-  File.write('deinterlace64.audulus', JSON.generate(build_deinterlace_grid_node))
+  File.write('deinterlace-64.audulus', JSON.generate(build_deinterlace_grid_node))
 end
