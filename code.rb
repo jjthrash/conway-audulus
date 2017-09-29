@@ -1,8 +1,5 @@
 require 'json'
 require 'yaml'
-
-#patch = JSON.parse(IO.read("Conway.audulus"))
-
 require 'securerandom'
 
 def uuid?(string)
