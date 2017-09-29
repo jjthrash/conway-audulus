@@ -59,11 +59,193 @@ def clone_node_helper(node, uuid_map)
   end
 end
 
+def add_node(patch, node)
+  patch['nodes'] << node
+  patch
+end
+
 def build_init_doc
   print "building init doc.."
   result = clone_node(INIT_PATCH)
   puts "done."
   result
+end
+
+def build_interlace_grid_node
+  doc = build_init_doc
+  patch = doc['patch']
+  input_nodes =
+    64.times.map {|i|
+      node = build_input_node
+      node['name'] = ''
+      node['position']['x'] = 0
+      node['position']['y'] = i * 50
+      node['exposedPosition'] = {
+        'x' => (i % 8) * 20,
+        'y' => (i / 8) * 20
+      }
+      node
+    }
+
+  mux_nodes =
+    8.times.map {|i|
+      node = build_mux_node
+      node['position']['x'] = 100
+      node['position']['y'] = i * 50 * 8
+      node
+    }
+
+  (input_nodes + mux_nodes).each do |node|
+    add_node(patch, node)
+  end
+
+  mux_nodes.zip(input_nodes.each_slice(8)) do |mux_node, input_slice|
+    input_slice.each_with_index do |input_node, i|
+      wire_output_to_input(patch, input_node, 0, mux_node, i+1)
+    end
+  end
+
+  doc
+end
+
+def build_deinterlace_grid_node
+  doc = build_init_doc
+  patch = doc['patch']
+  output_nodes =
+    64.times.map {|i|
+      node = build_output_node
+      node['name'] = ''
+      node['position'] = {
+        'x' => 0,
+        'y' => i * 100
+      }
+      node['exposedPosition'] = {
+        'x' => (i % 8) * 20,
+        'y' => (i / 8) * 20
+      }
+      node
+    }
+
+  sh_nodes =
+    64.times.map {|i|
+      node = build_sample_and_hold_node
+      node['position'] = {
+        'x' => -200,
+        'y' => i * 100
+      }
+      node
+    }
+
+  sh_nodes.zip(output_nodes) do |sh_node, output_node|
+    wire_output_to_input(patch, sh_node, 0, output_node, 0)
+  end
+
+  signal_demux_nodes =
+    8.times.map {|i|
+      node = build_demux_node
+      node['position'] = {
+        'x' => -400,
+        'y' => i * 800
+      }
+      node
+    }
+
+  gate_demux_nodes =
+    8.times.map {|i|
+      node = build_demux_node
+      node['position'] = {
+        'x' => -600,
+        'y' => i * 800 + 100
+      }
+      node
+    }
+
+  (output_nodes + sh_nodes + signal_demux_nodes + gate_demux_nodes).each do |node|
+    add_node(patch, node)
+  end
+
+  signal_demux_nodes.zip(gate_demux_nodes, sh_nodes.each_slice(8)) do |signal_demux_node, gate_demux_node, sh_slice|
+    sh_slice.each_with_index do |sh_node, i|
+      wire_output_to_input(patch, signal_demux_node, i, sh_node, 0)
+      wire_output_to_input(patch, gate_demux_node, i, sh_node, 1)
+    end
+  end
+
+  top_signal_demux_node = build_demux_node
+  top_signal_demux_node['position'] = {
+    'x' => -800,
+    'y' => 200
+  }
+  add_node(patch, top_signal_demux_node)
+
+  top_gate_demux_node = build_demux_node
+  top_gate_demux_node['position'] = {
+    'x' => -1000,
+    'y' => 300
+  }
+  add_node(patch, top_gate_demux_node)
+
+  signal_demux_nodes.each_slice(8) do |slice|
+    slice.each_with_index do |node, i|
+      wire_output_to_input(patch, top_signal_demux_node, i, node, 1)
+    end
+  end
+
+  gate_demux_nodes.each_slice(8) do |slice|
+    slice.each_with_index do |node, i|
+      wire_output_to_input(patch, top_gate_demux_node, i, node, 1)
+    end
+  end
+
+  pulse_via = build_via_node
+  pulse_via['position'] = {
+    'x' => -1200,
+    'y' => 0
+  }
+  add_node(patch, pulse_via )
+
+  clock_via = build_via_node
+  clock_via['position'] = {
+    'x' => -1200,
+    'y' => 50
+  }
+  add_node(patch, clock_via )
+
+  divided_clock_via = build_via_node
+  divided_clock_via['position'] = {
+    'x' => -1200,
+    'y' => 100
+  }
+  add_node(patch, divided_clock_via )
+
+  signal_via = build_via_node
+  signal_via['position'] = {
+    'x' => -1200,
+    'y' => 150
+  }
+  add_node(patch, signal_via )
+
+  (signal_demux_nodes + gate_demux_nodes).each do |node|
+    wire_output_to_input(patch, clock_via, 0, node, 0)
+  end
+
+  wire_output_to_input(patch, pulse_via, 0, top_gate_demux_node, 1)
+  wire_output_to_input(patch, divided_clock_via, 0, top_gate_demux_node, 0)
+  wire_output_to_input(patch, divided_clock_via, 0, top_signal_demux_node, 0)
+  wire_output_to_input(patch, signal_via, 0, top_signal_demux_node, 1)
+
+  input_node = build_input_node
+  input_node['position'] = {
+    'x' => -1400,
+    'y' => 150
+  }
+  input_node['exposedPosition'] = {
+    'x' => -40,
+    'y' => 0
+  }
+  add_node(patch, input_node)
+
+  doc
 end
 
 # input 0: gate
@@ -93,13 +275,41 @@ def build_clock_node
   clone_node(CLOCK_NODE)
 end
 
+def build_via_node
+  clone_node(VIA_NODE)
+end
+
 def build_input_node
   clone_node(INPUT_NODE)
 end
 
-def add_node(patch, node)
-  patch['nodes'] << node
-  patch
+def build_output_node
+  result = build_simple_node("Output")
+  result['name'] = "Output"
+  result
+end
+
+def build_sample_and_hold_node
+  build_simple_node("Sample & Hold")
+end
+
+def build_mux_node
+  build_simple_node("Mux8")
+end
+
+def build_demux_node
+  build_simple_node("Demux8")
+end
+
+def build_simple_node(type)
+  clone_node({
+    "type" => type,
+    "id" => "7e5486fc-994c-44f0-ae83-5ebba54d7e3b",
+    "position" => {
+      "x" => 0,
+      "y" => 0
+    }
+  })
 end
 
 def build_conway_grid_patch(width, height)
@@ -219,6 +429,8 @@ end
 def build_conway_patch(width, height)
   doc = build_init_doc
   patch = doc['patch']
+
+  # CONWAY SUBPATCH
   subpatch = build_subpatch_node
   subpatch['subPatch'] = build_conway_grid_patch(width, height)
   add_node(patch, subpatch)
@@ -358,3 +570,6 @@ SUBPATCH_NODE = JSON.parse <<JSON
 JSON
 
 CLOCK_NODE = JSON.parse(File.read('clock.json'))
+INTERLACE_NODE = JSON.parse(File.read('interlace-deinterlace.audulus'))['patch']['nodes'][0]
+DEINTERLACE_NODE = JSON.parse(File.read('interlace-deinterlace.audulus'))['patch']['nodes'][1]
+VIA_NODE = JSON.parse(File.read('via.audulus'))['patch']['nodes'][0]
