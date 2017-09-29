@@ -130,6 +130,17 @@ def build_output_node
   result
 end
 
+def build_knob_node
+  result = build_simple_node("Knob")
+  result['knob'] = {
+    'value' => 0.5,
+    'min' => 0.0,
+    'max' => 1.0,
+  }
+  expose_node(result, 0, 0)
+  result
+end
+
 def build_sample_and_hold_node
   build_simple_node("Sample & Hold")
 end

@@ -43,6 +43,7 @@ def build_interlace_grid_node
 
   output_node = build_output_node
   move_node(output_node, 600, 0)
+  expose_node(output_node, 140, -40)
   add_node(patch, output_node)
 
   wire_output_to_input(patch, mono_to_stereo_node, 0, output_node, 0)
@@ -64,10 +65,44 @@ def build_interlace_grid_node
     wire_output_to_input(patch, clock_via, 0, mux_node, 0)
   end
 
+  rate_node = clone_node(JSON.parse(File.read("rate.audulus"))['patch']['nodes'][0])
+  move_node(rate_node, clock_via['position']['x'] - 100, 0)
+  add_node(patch, rate_node)
+  wire_output_to_input(patch, rate_node, 0, clock_via, 0)
+
+  rate_knob = build_knob_node
+  rate_knob['knob'] = {
+    'value' => 10000,
+    'min' => 0.0,
+    'max' => 10000,
+  }
+  move_node(rate_knob, rate_node['position']['x'] - 200, 0)
+  expose_node(rate_knob, 15, -20)
+  add_node(patch, rate_knob)
+  wire_output_to_input(patch, rate_knob, 0, rate_node, 0)
+
+  rate_expr = build_simple_node('Expr')
+  rate_expr['expr'] = '8'
+  move_node(rate_expr, rate_knob['position']['x'], -100)
+  add_node(patch, rate_expr)
+
+  wire_output_to_input(patch, rate_expr, 0, rate_node, 1)
+
+  doc
+end
+
+def build_interlace_patch
+  doc = build_init_doc
+  patch = doc['patch']
+
+  subpatch = build_subpatch_node
+  subpatch['subPatch'] = build_interlace_grid_node['patch']
+  add_node(patch, subpatch)
+
   doc
 end
 
 if __FILE__ == $0
   require 'json'
-  File.write('interlace-64.audulus', JSON.generate(build_interlace_grid_node))
+  File.write('interlace-64.audulus', JSON.generate(build_interlace_patch))
 end
