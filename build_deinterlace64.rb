@@ -110,7 +110,7 @@ def build_deinterlace_grid_node
 
   input_node = build_input_node
   move_node(input_node, -1800, 150)
-  expose_node(input_node, -40, 0)
+  expose_node(input_node, 0, 0)
   add_node(patch, input_node)
 
   wire_output_to_input(patch, input_node, 0, stereo_to_mono, 0)
@@ -118,7 +118,18 @@ def build_deinterlace_grid_node
   doc
 end
 
+def build_deinterlace_patch
+  doc = build_init_doc
+  patch = doc['patch']
+
+  subpatch = build_subpatch_node
+  subpatch['subPatch'] = build_deinterlace_grid_node['patch']
+  add_node(patch, subpatch)
+
+  doc
+end
+
 if __FILE__ == $0
   require 'json'
-  File.write('deinterlace-64.audulus', JSON.generate(build_deinterlace_grid_node))
+  File.write('deinterlace-64.audulus', JSON.generate(build_deinterlace_patch))
 end
