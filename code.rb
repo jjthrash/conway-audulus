@@ -82,7 +82,7 @@ def build_interlace_grid_node
       node['position']['y'] = i * 50
       node['exposedPosition'] = {
         'x' => (i % 8) * 20,
-        'y' => (i / 8) * 20
+        'y' => (20*8) - (i / 8) * 20
       }
       node
     }
@@ -105,6 +105,58 @@ def build_interlace_grid_node
     end
   end
 
+  top_mux_node = build_mux_node
+  top_mux_node['position'] = {
+    'x' => 200,
+    'y' => 0
+  }
+  add_node(patch, top_mux_node)
+
+  mux_nodes.each_with_index do |mux_node, i|
+    wire_output_to_input(patch, mux_node, 0, top_mux_node, i+1)
+  end
+
+  mono_to_stereo_node = build_simple_node("MonoToStereo")
+  mono_to_stereo_node['position'] = {
+    'x' => 400,
+    'y' => 0
+  }
+  add_node(patch, mono_to_stereo_node)
+
+  wire_output_to_input(patch, top_mux_node, 0, mono_to_stereo_node, 1)
+
+  output_node = build_output_node
+  output_node['position'] = {
+    'x' => 600,
+    'y' => 0
+  }
+  add_node(patch, output_node)
+
+  wire_output_to_input(patch, mono_to_stereo_node, 0, output_node, 0)
+
+  divider = build_simple_node("Expr")
+  divider['expr'] = "x/8"
+  divider['position'] = {
+    'x' => input_nodes.last['position']['x'] - 200,
+    'y' => 0
+  }
+  add_node(patch, divider)
+
+  wire_output_to_input(patch, divider, 0, top_mux_node, 0)
+
+  clock_via = build_via_node
+  clock_via['position'] = {
+    'x' => divider['position']['x'] - 200,
+    'y' => 0
+  }
+  add_node(patch, clock_via)
+
+  wire_output_to_input(patch, clock_via, 0, divider, 0)
+  wire_output_to_input(patch, clock_via, 0, mono_to_stereo_node, 0)
+  mux_nodes.each do |mux_node|
+    wire_output_to_input(patch, clock_via, 0, mux_node, 0)
+  end
+
   doc
 end
 
@@ -121,7 +173,7 @@ def build_deinterlace_grid_node
       }
       node['exposedPosition'] = {
         'x' => (i % 8) * 20,
-        'y' => (i / 8) * 20
+        'y' => 20*8 - (i / 8) * 20
       }
       node
     }
@@ -202,28 +254,49 @@ def build_deinterlace_grid_node
     'x' => -1200,
     'y' => 0
   }
-  add_node(patch, pulse_via )
+  add_node(patch, pulse_via)
 
   clock_via = build_via_node
   clock_via['position'] = {
     'x' => -1200,
     'y' => 50
   }
-  add_node(patch, clock_via )
+  add_node(patch, clock_via)
 
   divided_clock_via = build_via_node
   divided_clock_via['position'] = {
     'x' => -1200,
     'y' => 100
   }
-  add_node(patch, divided_clock_via )
+  add_node(patch, divided_clock_via)
+
+  divider = build_simple_node("Expr")
+  divider['position'] = {
+    'x' => -1400,
+    'y' => 100
+  }
+  divider['expr'] = "x/8"
+  add_node(patch, divider)
+
+  wire_output_to_input(patch, divider, 0, divided_clock_via, 0)
 
   signal_via = build_via_node
   signal_via['position'] = {
     'x' => -1200,
     'y' => 150
   }
-  add_node(patch, signal_via )
+  add_node(patch, signal_via)
+
+  stereo_to_mono = build_simple_node('StereoToMono')
+  stereo_to_mono['position'] = {
+    'x' => -1600,
+    'y' => 150
+  }
+  add_node(patch, stereo_to_mono)
+
+  wire_output_to_input(patch, stereo_to_mono, 0, signal_via, 0)
+  wire_output_to_input(patch, stereo_to_mono, 1, divider, 0)
+  wire_output_to_input(patch, stereo_to_mono, 1, clock_via, 0)
 
   (signal_demux_nodes + gate_demux_nodes).each do |node|
     wire_output_to_input(patch, clock_via, 0, node, 0)
@@ -236,7 +309,7 @@ def build_deinterlace_grid_node
 
   input_node = build_input_node
   input_node['position'] = {
-    'x' => -1400,
+    'x' => -1800,
     'y' => 150
   }
   input_node['exposedPosition'] = {
@@ -244,6 +317,8 @@ def build_deinterlace_grid_node
     'y' => 0
   }
   add_node(patch, input_node)
+
+  wire_output_to_input(patch, input_node, 0, stereo_to_mono, 0)
 
   doc
 end
