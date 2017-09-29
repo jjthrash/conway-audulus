@@ -231,4 +231,5 @@ SUBPATCH_NODE = JSON.parse <<JSON
 }
 JSON
 
+CLOCK_NODE = JSON.parse(File.read('clock.json'))
 VIA_NODE = JSON.parse(File.read('via.audulus'))['patch']['nodes'][0]

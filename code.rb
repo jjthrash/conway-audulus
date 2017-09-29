@@ -177,10 +177,5 @@ def neighbor_nodes(conway_nodes, stride, node)
   }
 end
 
-
 CONWAY_PATCH = JSON.parse(File.read('conway_node.audulus'))['patch']['nodes'][0]
-
-CLOCK_NODE = JSON.parse(File.read('clock.json'))
-INTERLACE_NODE = JSON.parse(File.read('interlace-deinterlace.audulus'))['patch']['nodes'][0]
-DEINTERLACE_NODE = JSON.parse(File.read('interlace-deinterlace.audulus'))['patch']['nodes'][1]
 INTERLACE64_NODE = JSON.parse(File.read('interlace-64.audulus'))['patch']['nodes'][0]
