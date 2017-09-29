@@ -64,6 +64,28 @@ def add_node(patch, node)
   patch
 end
 
+def add_nodes(patch, nodes)
+  nodes.each do |node|
+    add_node(patch, node)
+  end
+end
+
+def move_node(node, x, y)
+  node['position'] = {
+    'x' => x,
+    'y' => y,
+  }
+  node
+end
+
+def expose_node(node, x, y)
+  node['exposedPosition'] = {
+    'x' => x,
+    'y' => y,
+  }
+  node
+end
+
 def build_init_doc
   print "building init doc.."
   result = clone_node(INIT_PATCH)
@@ -78,26 +100,19 @@ def build_interlace_grid_node
     64.times.map {|i|
       node = build_input_node
       node['name'] = ''
-      node['position']['x'] = 0
-      node['position']['y'] = i * 50
-      node['exposedPosition'] = {
-        'x' => (i % 8) * 20,
-        'y' => (20*8) - (i / 8) * 20
-      }
+      move_node(node, 0, i*50)
+      expose_node(node, (i % 8) * 20, (20*8) - (i / 8) * 20)
       node
     }
+  add_nodes(input_nodes)
 
   mux_nodes =
     8.times.map {|i|
       node = build_mux_node
-      node['position']['x'] = 100
-      node['position']['y'] = i * 50 * 8
+      move_node(node, 100, i*50*8)
       node
     }
-
-  (input_nodes + mux_nodes).each do |node|
-    add_node(patch, node)
-  end
+  add_nodes(mux_nodes)
 
   mux_nodes.zip(input_nodes.each_slice(8)) do |mux_node, input_slice|
     input_slice.each_with_index do |input_node, i|
@@ -106,10 +121,7 @@ def build_interlace_grid_node
   end
 
   top_mux_node = build_mux_node
-  top_mux_node['position'] = {
-    'x' => 200,
-    'y' => 0
-  }
+  move_node(top_mux_node, 200, 0)
   add_node(patch, top_mux_node)
 
   mux_nodes.each_with_index do |mux_node, i|
@@ -117,38 +129,26 @@ def build_interlace_grid_node
   end
 
   mono_to_stereo_node = build_simple_node("MonoToStereo")
-  mono_to_stereo_node['position'] = {
-    'x' => 400,
-    'y' => 0
-  }
+  move_node(mono_to_stereo_node, 400, 0)
   add_node(patch, mono_to_stereo_node)
 
   wire_output_to_input(patch, top_mux_node, 0, mono_to_stereo_node, 1)
 
   output_node = build_output_node
-  output_node['position'] = {
-    'x' => 600,
-    'y' => 0
-  }
+  move_node(output_node, 600, 0)
   add_node(patch, output_node)
 
   wire_output_to_input(patch, mono_to_stereo_node, 0, output_node, 0)
 
   divider = build_simple_node("Expr")
   divider['expr'] = "x/8"
-  divider['position'] = {
-    'x' => input_nodes.last['position']['x'] - 200,
-    'y' => 0
-  }
+  move_node(divider, input_nodes.last['position']['x'] - 200, 0)
   add_node(patch, divider)
 
   wire_output_to_input(patch, divider, 0, top_mux_node, 0)
 
   clock_via = build_via_node
-  clock_via['position'] = {
-    'x' => divider['position']['x'] - 200,
-    'y' => 0
-  }
+  move_node(clock_via, divider['position']['x'] - 200, 0)
   add_node(patch, clock_via)
 
   wire_output_to_input(patch, clock_via, 0, divider, 0)
@@ -167,24 +167,15 @@ def build_deinterlace_grid_node
     64.times.map {|i|
       node = build_output_node
       node['name'] = ''
-      node['position'] = {
-        'x' => 0,
-        'y' => i * 100
-      }
-      node['exposedPosition'] = {
-        'x' => (i % 8) * 20,
-        'y' => 20*8 - (i / 8) * 20
-      }
+      move_node(node, 0, i*100)
+      expose_node(node, (i % 8) * 20, 20*8 - (i / 8) * 20)
       node
     }
 
   sh_nodes =
     64.times.map {|i|
       node = build_sample_and_hold_node
-      node['position'] = {
-        'x' => -200,
-        'y' => i * 100
-      }
+      move_node(node, -200, i*100)
       node
     }
 
@@ -195,20 +186,14 @@ def build_deinterlace_grid_node
   signal_demux_nodes =
     8.times.map {|i|
       node = build_demux_node
-      node['position'] = {
-        'x' => -400,
-        'y' => i * 800
-      }
+      move_node(node, -400, i*800)
       node
     }
 
   gate_demux_nodes =
     8.times.map {|i|
       node = build_demux_node
-      node['position'] = {
-        'x' => -600,
-        'y' => i * 800 + 100
-      }
+      move_node(node, -600, i * 800 + 100)
       node
     }
 
@@ -224,17 +209,11 @@ def build_deinterlace_grid_node
   end
 
   top_signal_demux_node = build_demux_node
-  top_signal_demux_node['position'] = {
-    'x' => -800,
-    'y' => 200
-  }
+  move_node(top_signal_demux_node, -800, 200)
   add_node(patch, top_signal_demux_node)
 
   top_gate_demux_node = build_demux_node
-  top_gate_demux_node['position'] = {
-    'x' => -1000,
-    'y' => 300
-  }
+  move_node(top_gate_demux_node, -1000, 300)
   add_node(patch, top_gate_demux_node)
 
   signal_demux_nodes.each_slice(8) do |slice|
@@ -250,48 +229,30 @@ def build_deinterlace_grid_node
   end
 
   pulse_via = build_via_node
-  pulse_via['position'] = {
-    'x' => -1200,
-    'y' => 0
-  }
+  move_node(pulse_via, -1200, 0)
   add_node(patch, pulse_via)
 
   clock_via = build_via_node
-  clock_via['position'] = {
-    'x' => -1200,
-    'y' => 50
-  }
+  move_node(clock_via, -1200, 50)
   add_node(patch, clock_via)
 
   divided_clock_via = build_via_node
-  divided_clock_via['position'] = {
-    'x' => -1200,
-    'y' => 100
-  }
+  move_node(divided_clock_via, -1200, 100)
   add_node(patch, divided_clock_via)
 
   divider = build_simple_node("Expr")
-  divider['position'] = {
-    'x' => -1400,
-    'y' => 100
-  }
   divider['expr'] = "x/8"
+  move_node(divider, -1400, 100)
   add_node(patch, divider)
 
   wire_output_to_input(patch, divider, 0, divided_clock_via, 0)
 
   signal_via = build_via_node
-  signal_via['position'] = {
-    'x' => -1200,
-    'y' => 150
-  }
+  move_node(signal_via, -1200, 150)
   add_node(patch, signal_via)
 
   stereo_to_mono = build_simple_node('StereoToMono')
-  stereo_to_mono['position'] = {
-    'x' => -1600,
-    'y' => 150
-  }
+  move_node(stereo_to_mono, -1600, 150)
   add_node(patch, stereo_to_mono)
 
   wire_output_to_input(patch, stereo_to_mono, 0, signal_via, 0)
@@ -308,14 +269,8 @@ def build_deinterlace_grid_node
   wire_output_to_input(patch, signal_via, 0, top_signal_demux_node, 1)
 
   input_node = build_input_node
-  input_node['position'] = {
-    'x' => -1800,
-    'y' => 150
-  }
-  input_node['exposedPosition'] = {
-    'x' => -40,
-    'y' => 0
-  }
+  move_node(input_node, -1800, 150)
+  expose_node(input_node, -40, 0)
   add_node(patch, input_node)
 
   wire_output_to_input(patch, input_node, 0, stereo_to_mono, 0)
@@ -403,10 +358,7 @@ def build_conway_grid_patch(width, height)
         }
 
       nodes.each_with_index do |node, column|
-        node['position']['x'] = column * 160
-      end
-      nodes.each do |node|
-        node['position']['y'] = (height - row) * conway_node_height
+        move_node(node, column * 160, (height - row) * conway_node_height)
       end
 
       puts "done."
@@ -442,13 +394,8 @@ def build_conway_grid_patch(width, height)
         }
 
       nodes.each_with_index do |node, column|
-        node['position']['x'] = width * -trigger_node_width - 100 + trigger_node_width * column
-        node['exposedPosition'] = {}
-        node['exposedPosition']['x'] = column * 35
-      end
-      nodes.each do |node|
-        node['position']['y'] = (height - row) * trigger_node_height
-        node['exposedPosition']['y'] = 35*(height - row)
+        move_node(node, width * -trigger_node_width - 100 + trigger_node_width * column, (height - row) * trigger_node_height)
+        expose_node(node, column * 35, 35*(height - row))
       end
     }
 
@@ -465,25 +412,13 @@ def build_conway_grid_patch(width, height)
   light_node_height = 50
   light_nodes =
     height.times.flat_map {|row|
-      nodes =
-        width.times.map {|column|
-          build_light_node
-        }
-
+      nodes = width.times.map { build_light_node }
       nodes.each_with_index do |node, column|
-        node['position']['x'] = width * conway_node_width + 100 + light_node_width * column
-        node['exposedPosition'] = {}
-        node['exposedPosition']['x'] = column * 35
-      end
-      nodes.each do |node|
-        node['position']['y'] = (height - row) * light_node_height
-        node['exposedPosition']['y'] = 35*(height - row)
+        move_node(node, width * conway_node_width + 100 + light_node_width * column, (height - row) * light_node_height)
+        expose_node(node, column * 35, 35*(height - row))
       end
     }
-
-  light_nodes.each do |node|
-    add_node(patch, node)
-  end
+  add_nodes(patch, light_nodes)
 
   conway_nodes.zip(light_nodes) do |conway_node, light_node|
     wire_output_to_input(patch, conway_node, 0, light_node, 0)
