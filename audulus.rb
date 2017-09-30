@@ -164,12 +164,6 @@ def build_simple_node(type)
   })
 end
 
-def make_subpatch_node(patch)
-  patch["type"] = "Patch"
-  patch['subPatch'] = pa
-  patch
-end
-
 INIT_PATCH = YAML.load <<YAML
 ---
 version: 1

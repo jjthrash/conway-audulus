@@ -82,7 +82,7 @@ def build_interlace_grid_node
   wire_output_to_input(patch, rate_knob, 0, rate_node, 0)
 
   rate_expr = build_simple_node('Expr')
-  rate_expr['expr'] = '8'
+  rate_expr['expr'] = '64'
   move_node(rate_expr, rate_knob['position']['x'], -100)
   add_node(patch, rate_expr)
 

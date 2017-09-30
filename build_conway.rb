@@ -182,5 +182,5 @@ INTERLACE64_NODE = JSON.parse(File.read('interlace-64.audulus'))['patch']['nodes
 
 if __FILE__ == $0
   require 'json'
-  File.write('conway64.audulus', JSON.generate(build_conway_grid_patch(8,8)))
+  File.write('conway64.audulus', JSON.generate(build_conway_patch(8,8)))
 end
