@@ -99,6 +99,16 @@ def build_init_doc
   result
 end
 
+def make_subpatch(subpatch)
+  doc = build_init_doc
+  patch = doc['patch']
+
+  subpatch_node = build_subpatch_node
+  subpatch_node['subPatch'] = subpatch
+  add_node(patch, subpatch_node)
+  doc
+end
+
 def build_light_node
   clone_node(LIGHT_NODE)
 end
