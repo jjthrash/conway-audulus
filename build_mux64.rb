@@ -53,7 +53,7 @@ def build_mux64_patch
   end
 
   divide_8 = build_simple_node('Expr')
-  divide_8['expr'] = 's/8'
+  divide_8['expr'] = 'mod(s/8, 8)'
   move_node(divide_8, 0, -100)
   add_node(patch, divide_8)
 
