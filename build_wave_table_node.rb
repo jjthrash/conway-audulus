@@ -156,11 +156,80 @@ class Patch
   end
 end
 
+class Resample
+  def initialize(samples)
+    @samples = samples
+  end
+
+  def self.resample(new_count, samples)
+    resampler = Resample.new(samples)
+    new_count.times.map {|i|
+      resampler.interpolate(calculate_x(samples.count, new_count, i))
+    }
+  end
+
+  def self.calculate_x(original_count, new_count, i)
+    i.to_f * original_count.to_f / new_count.to_f
+  end
+
+  def interpolate(x)
+    k = x.floor
+    t = (x - x(k))/(x(k+1) - x(k))
+    h00(t)*p(k) + h10(t)*m(k) + h01(t)*p(k+1) + h11(t)*m(k+1)
+  end
+
+  def x(k)
+    k.to_f
+  end
+
+  def p(k)
+    @samples[k]
+  end
+
+  def m(k)
+    slopes(k)
+  end
+
+  def slopes(k)
+    @slopes ||= build_slopes
+    @slopes[k]
+  end
+
+  def build_slopes
+    two_point_slopes = @samples[0..-2].zip(@samples[1..-1]).map {|p1, p2|
+      p2 - p1
+    }
+    three_point_slopes = two_point_slopes[0..-2].zip(two_point_slopes[1..-1]).map {|s1, s2|
+      (s1+s2)/2.0
+    }
+    two_point_slopes[0,1] +
+      three_point_slopes +
+      two_point_slopes[-1,1]
+  end
+
+  def h00(t)
+    2*(t**3) - 3*(t**2) + 1
+  end
+
+  def h01(t)
+    t**3 - 2*t**2 + t
+  end
+
+  def h10(t)
+    -2*t**3 + 3*t**2
+  end
+
+  def h11(t)
+    t**3 - t**2
+  end
+end
+
 if __FILE__ == $0
   require 'json'
   samples =
     File.open(ARGV[0]) do |file|
-      Wav.scale_samples(Wav.load_samples(file))
+      samples = Wav.scale_samples(Wav.load_samples(file))
+      Resample.resample(2**Math.log2(samples.count).floor.to_i, samples)
     end
 #  samples = 256.times.map {|i|
 #    x = i.to_f/255.0*2*Math::PI
