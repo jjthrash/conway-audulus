@@ -77,12 +77,26 @@ class Patch
 
     wire_output_to_input(patch, hertz_node, 0, phaser_node, 0)
 
+    sample_rate_node = build_simple_node('SampleRate')
+    move_node(sample_rate_node, -800, -100)
+    add_node(patch, sample_rate_node)
+
+    factor = Math.log2(samples.count).to_i
+    step_node = build_simple_node('Expr')
+    step_node ['expr'] = "exp2(#{factor} - floor(log2(samplerate/hz)))"
+    move_node(step_node, -600, -100)
+    add_node(patch, step_node)
+
+    wire_output_to_input(patch, sample_rate_node, 0, step_node, 0)
+    wire_output_to_input(patch, hertz_node, 0, step_node, 1)
+
     scaler_node = build_simple_node('Expr')
-    scaler_node['expr'] = "t/2/pi*#{samples.count.to_f - 0.001}"
+    scaler_node['expr'] = "s*floor(t/2/pi*#{samples.count.to_f - 0.001}/s)"
     move_node(scaler_node, -300, 0)
     add_node(patch, scaler_node)
 
-    wire_output_to_input(patch, phaser_node, 0, scaler_node, 0)
+    wire_output_to_input(patch, step_node, 0, scaler_node, 0)
+    wire_output_to_input(patch, phaser_node, 0, scaler_node, 1)
 
     expression_nodes =
       samples.each_with_index.map {|sample, i|
