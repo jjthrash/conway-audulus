@@ -77,68 +77,28 @@ class Patch
 
     wire_output_to_input(patch, hertz_node, 0, phaser_node, 0)
 
-    sample_rate_node = build_simple_node('SampleRate')
-    move_node(sample_rate_node, -800, -100)
-    add_node(patch, sample_rate_node)
+    domain_scale_node = build_simple_node("Expr")
+    domain_scale_node['expr'] = 'x/2/pi'
+    add_node(patch, domain_scale_node)
 
-    factor = Math.log2(samples.count).to_i
-    step_node = build_simple_node('Expr')
-    step_node ['expr'] = "exp2(#{factor} - floor(log2(samplerate/hz)))"
-    move_node(step_node, -600, -100)
-    add_node(patch, step_node)
+    wire_output_to_input(patch, phaser_node, 0, domain_scale_node, 0)
 
-    wire_output_to_input(patch, sample_rate_node, 0, step_node, 0)
-    wire_output_to_input(patch, hertz_node, 0, step_node, 1)
-
-    scaler_node = build_simple_node('Expr')
-    scaler_node['expr'] = "s*floor(t/2/pi*#{samples.count.to_f - 0.001}/s)"
-    move_node(scaler_node, -300, 0)
-    add_node(patch, scaler_node)
-
-    wire_output_to_input(patch, step_node, 0, scaler_node, 0)
-    wire_output_to_input(patch, phaser_node, 0, scaler_node, 1)
-
-    expression_nodes =
-      samples.each_with_index.map {|sample, i|
-        node = build_simple_node('Expr')
-        node['expr'] = sample.to_s
-        move_node(node, 0, i*50)
-        node
+    spline_node = build_simple_node("Spline")
+    spline_node["controlPoints"] = samples.each_with_index.map {|sample, i|
+      {
+        "x" => i.to_f/(samples.count-1).to_f,
+        "y" => (sample+1)/2,
       }
-    add_nodes(patch, expression_nodes)
+    }
+    add_node(patch, spline_node)
 
-    mux_count = (samples.count.to_f / 64.0).ceil
-    mux_nodes =
-      mux_count.times.map {|i|
-        node = build_mux64_node
-        move_node(node, 300, i*50*64)
-        node
-      }
-    add_nodes(patch, mux_nodes)
+    wire_output_to_input(patch, domain_scale_node, 0, spline_node, 0)
 
-    mux_nodes.zip(expression_nodes.each_slice(64)) do |mux_node, slice|
-      slice.each_with_index do |expression_node, i|
-        wire_output_to_input(patch, expression_node, 0, mux_node, i+1)
-      end
+    range_scale_node = build_simple_node("Expr")
+    range_scale_node['expr'] = 'x*2-1'
+    add_node(patch, range_scale_node)
 
-      wire_output_to_input(patch, scaler_node, 0, mux_node, 0)
-    end
-
-    output_multiplexer_node = build_mux64_node
-    move_node(output_multiplexer_node, 600, 0)
-    add_node(patch, output_multiplexer_node)
-
-    mux_nodes.each_with_index do |mux_node, i|
-      wire_output_to_input(patch, mux_node, 0, output_multiplexer_node, i+1)
-    end
-
-    selector_node = build_simple_node('Expr')
-    selector_node['expr'] = 'x/64'
-    move_node(selector_node, 0, -100)
-    add_node(patch, selector_node)
-
-    wire_output_to_input(patch, scaler_node, 0, selector_node, 0)
-    wire_output_to_input(patch, selector_node, 0, output_multiplexer_node, 0)
+    wire_output_to_input(patch, spline_node, 0, range_scale_node, 0)
 
     filter_node = build_simple_node("Filter")
     filter_node['res'] = 0
