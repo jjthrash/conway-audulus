@@ -110,7 +110,7 @@ class Patch
     move_node(spline_picker_node, -100, -100)
     add_node(patch, spline_picker_node)
 
-    mux_node = build_mux_node
+    mux_node = build_xmux_node
     move_node(mux_node, 400, 0)
     add_node(patch, mux_node)
 
@@ -155,6 +155,11 @@ class Patch
   MUX64_NODE = JSON.parse(File.read('mux64.audulus'))['patch']['nodes'][0]
   def self.build_mux64_node
     clone_node(MUX64_NODE)
+  end
+
+  XMUX_NODE = JSON.parse(File.read('xmux.audulus'))['patch']['nodes'][0]
+  def self.build_xmux_node
+    clone_node(XMUX_NODE)
   end
 end
 
