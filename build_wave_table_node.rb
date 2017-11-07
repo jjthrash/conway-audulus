@@ -113,7 +113,7 @@ class Patch
     end
 
     spline_picker_node = build_simple_node('Expr')
-    spline_picker_node['expr'] = "clamp(ceil(log2(hz/55)), 0, 8)"
+    spline_picker_node['expr'] = "clamp(log2(hz/55), 0, 8)"
     move_node(spline_picker_node, -100, -100)
     add_node(patch, spline_picker_node)
 
