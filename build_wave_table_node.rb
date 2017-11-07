@@ -79,26 +79,54 @@ class Patch
 
     domain_scale_node = build_simple_node("Expr")
     domain_scale_node['expr'] = 'x/2/pi'
+    move_node(domain_scale_node, -300, 0)
     add_node(patch, domain_scale_node)
 
     wire_output_to_input(patch, phaser_node, 0, domain_scale_node, 0)
 
-    spline_node = build_simple_node("Spline")
-    spline_node["controlPoints"] = samples.each_with_index.map {|sample, i|
-      {
-        "x" => i.to_f/(samples.count-1).to_f,
-        "y" => (sample+1)/2,
+    frequencies = (0..7).map {|i| 55*2**i}
+    spline_nodes =
+      frequencies.each_with_index.map {|frequency, i|
+        resampled = Resample2.resample_for_fundamental(44100, frequency, samples)
+        spline_node = build_simple_node("Spline")
+        spline_node["controlPoints"] = resampled.each_with_index.map {|sample, i|
+          {
+            "x" => i.to_f/(samples.count-1).to_f,
+            "y" => (sample+1)/2,
+          }
+        }
+        move_node(spline_node, -100, i*200)
+        spline_node
       }
-    }
-    add_node(patch, spline_node)
 
-    wire_output_to_input(patch, domain_scale_node, 0, spline_node, 0)
+    add_nodes(patch, spline_nodes)
+
+    spline_nodes.each do |spline_node|
+      wire_output_to_input(patch, domain_scale_node, 0, spline_node, 0)
+    end
+
+    spline_picker_node = build_simple_node('Expr')
+    spline_picker_node['expr'] = "max(ceil(log2(hz/55)), 0)"
+    move_node(spline_picker_node, -100, -100)
+    add_node(patch, spline_picker_node)
+
+    mux_node = build_mux_node
+    move_node(mux_node, 400, 0)
+    add_node(patch, mux_node)
+
+    spline_nodes.each_with_index do |spline_node, i|
+      wire_output_to_input(patch, spline_node, 0, mux_node, i+1)
+    end
+
+    wire_output_to_input(patch, hertz_node, 0, spline_picker_node, 0)
+    wire_output_to_input(patch, spline_picker_node, 0, mux_node, 0)
 
     range_scale_node = build_simple_node("Expr")
     range_scale_node['expr'] = 'x*2-1'
+    move_node(range_scale_node, 600, 0)
     add_node(patch, range_scale_node)
 
-    wire_output_to_input(patch, spline_node, 0, range_scale_node, 0)
+    wire_output_to_input(patch, mux_node, 0, range_scale_node, 0)
 
     filter_node = build_simple_node("Filter")
     filter_node['res'] = 0
@@ -118,7 +146,7 @@ class Patch
     wire_output_to_input(patch, hertz_node, 0, hertz_2_node, 0)
     wire_output_to_input(patch, hertz_2_node, 0, filter_node, 1)
 
-    wire_output_to_input(patch, output_multiplexer_node, 0, filter_node, 0)
+    wire_output_to_input(patch, range_scale_node, 0, filter_node, 0)
     wire_output_to_input(patch, filter_node, 0, output_node, 0)
 
     doc
@@ -198,16 +226,39 @@ class Resample
   end
 end
 
+class Resample2
+  require 'fftw3'
+  # sample_rate, Hz, e.g. 44100
+  # fundamental, Hz, e.g. 440
+  # samples: -1..1
+  def self.resample_for_fundamental(sample_rate, fundamental, samples)
+    fft = FFTW3.fft(NArray[samples]).to_a.flatten
+    dampened = dampen_higher_partials(sample_rate, fundamental, fft)
+    (FFTW3.ifft(NArray[dampened]) / samples.count).real.to_a.flatten
+  end
+
+  # kill everything higher than a scaled nyquist limit
+  # ease in/out everything else to minimize partials near nyquist
+  def self.dampen_higher_partials(sample_rate, fundamental, fft)
+    sample_fundamental = sample_rate / fft.count
+    scaled_nyquist = sample_rate / 2 / fundamental * sample_fundamental
+    sub_nyquist_sample_count = fft.count / sample_rate.to_f * scaled_nyquist
+    fft.each_with_index.map {|power, i|
+      hz = i / sample_rate.to_f
+      if hz < sub_nyquist_sample_count
+        power * (Math.cos(i*Math::PI/2/sub_nyquist_sample_count)**2)
+      else
+        0+0i
+      end
+    }
+  end
+end
+
 if __FILE__ == $0
   require 'json'
   samples =
     File.open(ARGV[0]) do |file|
-      samples = Wav.scale_samples(Wav.load_samples(file))
-      Resample.resample(2**Math.log2(samples.count).floor.to_i, samples)
+      Wav.scale_samples(Wav.load_samples(file))
     end
-#  samples = 256.times.map {|i|
-#    x = i.to_f/255.0*2*Math::PI
-#    Math.sin(x)
-#  }
   File.write('wavetable.audulus', JSON.generate(make_subpatch(Patch.build_patch(samples)['patch'])))
 end
