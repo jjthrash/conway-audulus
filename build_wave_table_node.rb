@@ -128,26 +128,12 @@ class Patch
 
     wire_output_to_input(patch, mux_node, 0, range_scale_node, 0)
 
-    filter_node = build_simple_node("Filter")
-    filter_node['res'] = 0
-    move_node(filter_node, 900, 0)
-    add_node(patch, filter_node)
-
     output_node = build_output_node
     move_node(output_node, 1100, 0)
     expose_node(output_node, 100, 0)
     add_node(patch, output_node)
 
-    hertz_2_node = build_simple_node("Expr")
-    hertz_2_node['expr'] = 'x*2'
-    move_node(hertz_2_node, 700, -100)
-    add_node(patch, hertz_2_node)
-
-    wire_output_to_input(patch, hertz_node, 0, hertz_2_node, 0)
-    wire_output_to_input(patch, hertz_2_node, 0, filter_node, 1)
-
-    wire_output_to_input(patch, range_scale_node, 0, filter_node, 0)
-    wire_output_to_input(patch, filter_node, 0, output_node, 0)
+    wire_output_to_input(patch, range_scale_node, 0, output_node, 0)
 
     doc
   end
