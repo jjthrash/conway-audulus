@@ -240,12 +240,14 @@ class Resample2
   # kill everything higher than a scaled nyquist limit
   # ease in/out everything else to minimize partials near nyquist
   def self.dampen_higher_partials(sample_rate, fundamental, fft)
-    sample_fundamental = sample_rate / fft.count
-    scaled_nyquist = sample_rate / 2 / fundamental * sample_fundamental
-    sub_nyquist_sample_count = fft.count / sample_rate.to_f * scaled_nyquist
+    nyquist = sample_rate.to_f / 2
+    sample_fundamental = sample_rate.to_f / fft.count
+    scaled_nyquist = nyquist / fundamental * sample_fundamental
+    sample_duration = fft.count.to_f / sample_rate
+    sub_nyquist_sample_count = scaled_nyquist * sample_duration
     fft.each_with_index.map {|power, i|
-      hz = i / sample_rate.to_f
-      if hz < sub_nyquist_sample_count
+      hz = i.to_f / fft.count * sample_rate.to_f
+      if hz < scaled_nyquist
         power * (Math.cos(i*Math::PI/2/sub_nyquist_sample_count)**2)
       else
         0+0i
