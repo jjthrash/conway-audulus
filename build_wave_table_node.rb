@@ -66,10 +66,17 @@ class Patch
     doc = build_init_doc
     patch = doc['patch']
 
-    hertz_node = build_input_node
-    hertz_node['name'] = 'hz'
-    move_node(hertz_node, -700, 0)
+    hertz_input_node = build_input_node
+    hertz_input_node['name'] = 'hz'
+    move_node(hertz_input_node, -700, 0)
+    add_node(patch, hertz_input_node)
+
+    hertz_node = build_simple_node('Expr')
+    hertz_node['expr'] = 'clamp(hz, 0.0001, 12000)'
+    move_node(hertz_node, -700, -100)
     add_node(patch, hertz_node)
+
+    wire_output_to_input(patch, hertz_input_node, 0, hertz_node, 0)
 
     phaser_node = build_simple_node('Phasor')
     move_node(phaser_node, -500, 0)
@@ -106,7 +113,7 @@ class Patch
     end
 
     spline_picker_node = build_simple_node('Expr')
-    spline_picker_node['expr'] = "max(ceil(log2(hz/55)), 0)"
+    spline_picker_node['expr'] = "clamp(ceil(log2(hz/55)), 0, 8)"
     move_node(spline_picker_node, -100, -100)
     add_node(patch, spline_picker_node)
 
