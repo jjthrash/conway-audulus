@@ -74,17 +74,36 @@ class Wav
 end
 
 class Patch
-  def self.build_patch(samples)
+  def self.build_patch(samples, title1, title2)
     doc = build_init_doc
     patch = doc['patch']
 
-    hertz_input_node = build_input_node
-    hertz_input_node['name'] = 'hz'
-    move_node(hertz_input_node, -700, 0)
-    add_node(patch, hertz_input_node)
+    title1_node = build_text_node(title1)
+    move_node(title1_node, -700, 300)
+    expose_node(title1_node, -10, -30)
+
+    add_node(patch, title1_node)
+
+    title2_node = build_text_node(title2)
+    move_node(title2_node, -700, 250)
+    expose_node(title2_node, -10, -45)
+
+    add_node(patch, title2_node)
+
+    o_input_node = build_input_node
+    o_input_node['name'] = ''
+    move_node(o_input_node, -700, 0)
+    expose_node(o_input_node, 0, 0)
+    add_node(patch, o_input_node)
+
+    o2hz_node = build_o2hz_node
+    move_node(o2hz_node, -700, -100)
+    add_node(patch, o2hz_node)
+
+    wire_output_to_input(patch, o_input_node, 0, o2hz_node, 0)
 
     hertz_node = build_expr_node('clamp(hz, 0.0001, 12000)')
-    move_node(hertz_node, -700, -100)
+    move_node(hertz_node, -700, -200)
     add_node(patch, hertz_node)
 
     wire_output_to_input(patch, o2hz_node, 0, hertz_node, 0)
@@ -137,16 +156,16 @@ class Patch
     wire_output_to_input(patch, hertz_node, 0, spline_picker_node, 0)
     wire_output_to_input(patch, spline_picker_node, 0, mux_node, 0)
 
-    range_scale_node = build_simple_node("Expr")
-    range_scale_node['expr'] = 'x*2-1'
+    range_scale_node = build_expr_node('x*2-1')
     move_node(range_scale_node, 600, 0)
     add_node(patch, range_scale_node)
 
     wire_output_to_input(patch, mux_node, 0, range_scale_node, 0)
 
     output_node = build_output_node
+    output_node['name'] = ''
     move_node(output_node, 1100, 0)
-    expose_node(output_node, 100, 0)
+    expose_node(output_node, 50, 0)
     add_node(patch, output_node)
 
     wire_output_to_input(patch, range_scale_node, 0, output_node, 0)
@@ -162,6 +181,11 @@ class Patch
   XMUX_NODE = JSON.parse(File.read('xmux.audulus'))['patch']['nodes'][0]
   def self.build_xmux_node
     clone_node(XMUX_NODE)
+  end
+
+  O2HZ_NODE = JSON.parse(File.read('o2Hz.audulus'))['patch']['nodes'][0]
+  def self.build_o2hz_node
+    clone_node(O2HZ_NODE)
   end
 end
 
