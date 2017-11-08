@@ -71,12 +71,11 @@ class Patch
     move_node(hertz_input_node, -700, 0)
     add_node(patch, hertz_input_node)
 
-    hertz_node = build_simple_node('Expr')
-    hertz_node['expr'] = 'clamp(hz, 0.0001, 12000)'
+    hertz_node = build_expr_node('clamp(hz, 0.0001, 12000)')
     move_node(hertz_node, -700, -100)
     add_node(patch, hertz_node)
 
-    wire_output_to_input(patch, hertz_input_node, 0, hertz_node, 0)
+    wire_output_to_input(patch, o2hz_node, 0, hertz_node, 0)
 
     phaser_node = build_simple_node('Phasor')
     move_node(phaser_node, -500, 0)
@@ -84,8 +83,7 @@ class Patch
 
     wire_output_to_input(patch, hertz_node, 0, phaser_node, 0)
 
-    domain_scale_node = build_simple_node("Expr")
-    domain_scale_node['expr'] = 'x/2/pi'
+    domain_scale_node = build_expr_node('x/2/pi')
     move_node(domain_scale_node, -300, 0)
     add_node(patch, domain_scale_node)
 
@@ -112,8 +110,7 @@ class Patch
       wire_output_to_input(patch, domain_scale_node, 0, spline_node, 0)
     end
 
-    spline_picker_node = build_simple_node('Expr')
-    spline_picker_node['expr'] = "clamp(log2(hz/55), 0, 8)"
+    spline_picker_node = build_expr_node("clamp(log2(hz/55), 0, 8)")
     move_node(spline_picker_node, -100, -100)
     add_node(patch, spline_picker_node)
 

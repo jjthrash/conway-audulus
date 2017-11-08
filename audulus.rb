@@ -163,6 +163,12 @@ def build_demux_node
   build_simple_node("Demux8")
 end
 
+def build_expr_node(expr)
+  result = build_simple_node('Expr')
+  result['expr'] = expr
+  result
+end
+
 def build_simple_node(type)
   clone_node({
     "type" => type,
