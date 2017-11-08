@@ -167,6 +167,12 @@ def build_expr_node(expr)
   result
 end
 
+def build_text_node(text)
+  result = build_simple_node("Text")
+  result['text'] = text
+  result
+end
+
 def build_simple_node(type)
   clone_node({
     "type" => type,
