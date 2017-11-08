@@ -12,67 +12,6 @@ class Sox
   end
 end
 
-class Wav
-  def self.load_samples(io)
-    header = load_header(io)
-    load_chunks(header, io)[0][:samples]
-  end
-
-  def self.load_header(io)
-    base_keys = %w(master_chunk_id master_chunk_size wave_id format_chunk_id format_chunk_size)
-    base_values = io.read(20).unpack("A4L<A4A4L<")
-    base_header = Hash[base_keys.map(&:to_sym).zip(base_values)]
-    format_header =
-      case base_header[:format_chunk_size]
-        when 16
-          format_keys = %w(format number_of_channels samples_per_second average_bytes_per_second block_align bits_per_sample)
-          format_values = io.read(16).unpack("S<S<L<L<S<S<")
-          Hash[format_keys.map(&:to_sym).zip(format_values)]
-        else
-          raise "not supported"
-      end
-
-    base_header.merge(format_header)
-  #  %w(number_of_channels samples_per_second average_bytes_per_second block_align bits_per_sample
-  #      extension_size valid_bits_per_sample channel_mask subformat).map(&:to_sym)
-  #  header = io.read(60).unpack("A4L<A4A4L<S<S<L<L<S<S<S<S<L<A16")
-  #  Hash[keys.zip(header)]
-  end
-
-  def self.load_chunks(header, io)
-    chunks = []
-    while !io.eof?
-      chunk_id = io.read(4)
-      case chunk_id
-      when "data"
-        chunks << read_data_chunk(header, io)
-      when "fact"
-        read_fact_chunk(header, io)
-      end
-    end
-
-    chunks
-  end
-
-  def self.read_data_chunk(header, io)
-    size = io.read(4).unpack("L<")[0]
-    p header
-    sample_count = size / header[:block_align]
-    samples = sample_count.times.map {
-      sample = io.read(header[:block_align]).unpack("S<")[0]
-    }
-    data = io.read(size)
-    { :type => "data",
-      :samples => samples }
-  end
-
-  def self.scale_samples(samples_16_bit)
-    samples_16_bit.map {|sample|
-      (sample.to_f / 0x7FFF.to_f) - 1.0
-    }
-  end
-end
-
 class Patch
   def self.build_patch(samples, title1, title2)
     doc = build_init_doc
@@ -123,7 +62,7 @@ class Patch
     frequencies = (0..7).map {|i| 55*2**i}
     spline_nodes =
       frequencies.each_with_index.map {|frequency, i|
-        resampled = Resample2.resample_for_fundamental(44100, frequency, samples)
+        resampled = Resample.resample_for_fundamental(44100, frequency, samples)
         spline_node = build_simple_node("Spline")
         spline_node["controlPoints"] = resampled.each_with_index.map {|sample, i|
           {
@@ -190,74 +129,6 @@ class Patch
 end
 
 class Resample
-  def initialize(samples)
-    @samples = samples
-  end
-
-  def self.resample(new_count, samples)
-    resampler = Resample.new(samples)
-    new_count.times.map {|i|
-      resampler.interpolate(calculate_x(samples.count, new_count, i))
-    }
-  end
-
-  def self.calculate_x(original_count, new_count, i)
-    i.to_f * original_count.to_f / new_count.to_f
-  end
-
-  def interpolate(x)
-    k = x.floor
-    t = (x - x(k))/(x(k+1) - x(k))
-    h00(t)*p(k) + h10(t)*m(k) + h01(t)*p(k+1) + h11(t)*m(k+1)
-  end
-
-  def x(k)
-    k.to_f
-  end
-
-  def p(k)
-    @samples[k]
-  end
-
-  def m(k)
-    slopes(k)
-  end
-
-  def slopes(k)
-    @slopes ||= build_slopes
-    @slopes[k]
-  end
-
-  def build_slopes
-    two_point_slopes = @samples[0..-2].zip(@samples[1..-1]).map {|p1, p2|
-      p2 - p1
-    }
-    three_point_slopes = two_point_slopes[0..-2].zip(two_point_slopes[1..-1]).map {|s1, s2|
-      (s1+s2)/2.0
-    }
-    two_point_slopes[0,1] +
-      three_point_slopes +
-      two_point_slopes[-1,1]
-  end
-
-  def h00(t)
-    2*(t**3) - 3*(t**2) + 1
-  end
-
-  def h01(t)
-    t**3 - 2*t**2 + t
-  end
-
-  def h10(t)
-    -2*t**3 + 3*t**2
-  end
-
-  def h11(t)
-    t**3 - t**2
-  end
-end
-
-class Resample2
   require 'fftw3'
   # sample_rate, Hz, e.g. 44100
   # fundamental, Hz, e.g. 440
