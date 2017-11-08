@@ -1,5 +1,17 @@
 require_relative 'audulus'
 
+class Sox
+  def self.load_samples(path)
+    `sox #{path} -t dat -`.
+      lines.
+      reject {|l| l.start_with?(';')}.
+      map(&:strip).
+      map(&:split).
+      map(&:last).
+      map(&:to_f)
+  end
+end
+
 class Wav
   def self.load_samples(io)
     header = load_header(io)
@@ -253,9 +265,10 @@ end
 
 if __FILE__ == $0
   require 'json'
-  samples =
-    File.open(ARGV[0]) do |file|
-      Wav.scale_samples(Wav.load_samples(file))
-    end
-  File.write('wavetable.audulus', JSON.generate(make_subpatch(Patch.build_patch(samples)['patch'])))
+  path = ARGV[0]
+  parent, file = path.split("/")[-2..-1]
+  samples = Sox.load_samples(path)
+  basename = File.basename(file, ".wav")
+  puts "building #{basename}.audulus"
+  File.write("#{basename}.audulus", JSON.generate(make_subpatch(Patch.build_patch(samples, parent, basename)['patch'])))
 end
