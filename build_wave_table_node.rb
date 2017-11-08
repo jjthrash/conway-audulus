@@ -112,11 +112,6 @@ class Patch
     doc
   end
 
-  MUX64_NODE = JSON.parse(File.read('mux64.audulus'))['patch']['nodes'][0]
-  def self.build_mux64_node
-    clone_node(MUX64_NODE)
-  end
-
   XMUX_NODE = JSON.parse(File.read('xmux.audulus'))['patch']['nodes'][0]
   def self.build_xmux_node
     clone_node(XMUX_NODE)
