@@ -93,9 +93,7 @@ def wire_output_to_input(patch, source_node, source_output, destination_node, de
 end
 
 def build_init_doc
-  print "building init doc.."
   result = clone_node(INIT_PATCH)
-  puts "done."
   result
 end
 
