@@ -60,11 +60,20 @@ class Patch
     wire_output_to_input(patch, phaser_node, 0, domain_scale_node, 0)
 
     frequencies = (0..7).map {|i| 55*2**i}
+    sample_sets = frequencies.map {|frequency|
+      Resample.resample_for_fundamental(44100, frequency, samples)
+    }
+
+    normalization_factor = 1.0 / sample_sets.flatten.map(&:abs).max
+
+    normalized_sample_sets = sample_sets.map {|sample_set|
+      sample_set.map {|sample| sample*normalization_factor}
+    }
+
     spline_nodes =
-      frequencies.each_with_index.map {|frequency, i|
-        resampled = Resample.resample_for_fundamental(44100, frequency, samples)
+      normalized_sample_sets.each_with_index.map {|samples, i|
         spline_node = build_simple_node("Spline")
-        spline_node["controlPoints"] = resampled.each_with_index.map {|sample, i|
+        spline_node["controlPoints"] = samples.each_with_index.map {|sample, i|
           {
             "x" => i.to_f/(samples.count-1).to_f,
             "y" => (sample+1)/2,
