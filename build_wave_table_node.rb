@@ -1,3 +1,4 @@
+require 'json'
 require_relative 'audulus'
 
 class Sox
@@ -154,20 +155,47 @@ class Resample
     fft.each_with_index.map {|power, i|
       hz = i.to_f / fft.count * sample_rate.to_f
       if hz < scaled_nyquist
-        power * (Math.cos(i*Math::PI/2/sub_nyquist_sample_count)**2)
+        scale_partial(i, sub_nyquist_sample_count, power)
       else
         0+0i
       end
     }
   end
+
+  def self.scale_partial(partial_index, partial_count, partial_value)
+    partial_value * (Math.cos(partial_index.to_f*Math::PI/2/partial_count)**2)
+  end
 end
 
-if __FILE__ == $0
-  require 'json'
-  path = ARGV[0]
+def build_patch_from_wav_file(path)
   parent, file = path.split("/")[-2..-1]
   samples = Sox.load_samples(path)
   basename = File.basename(file, ".wav")
   puts "building #{basename}.audulus"
   File.write("#{basename}.audulus", JSON.generate(make_subpatch(Patch.build_patch(samples, parent, basename)['patch'])))
+end
+
+def make_random_samples(count)
+  count.times.map {
+    rand*2-1
+  }
+end
+
+def make_parabolic_samples(count)
+  f = ->(x) { -4*x**2 + 4*x }
+  count.times.map {|index|
+    index.to_f / (count-1)
+  }.map(&f).map {|sample|
+    sample*2-1
+  }
+end
+
+def build_patch_from_samples(samples, title1, title2, output_path)
+  puts "building #{output_path}"
+  File.write(output_path, JSON.generate(make_subpatch(Patch.build_patch(samples, title1, title2)['patch'])))
+end
+
+if __FILE__ == $0
+  path = ARGV[0]
+  build_patch_from_wav_file(path)
 end
