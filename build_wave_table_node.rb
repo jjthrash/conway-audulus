@@ -3,7 +3,7 @@ require_relative 'audulus'
 
 class Sox
   def self.load_samples(path)
-    `sox #{path} -t dat -`.
+    `sox "#{path}" -t dat -`.
       lines.
       reject {|l| l.start_with?(';')}.
       map(&:strip).
