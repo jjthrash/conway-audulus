@@ -204,10 +204,9 @@ class Resample
     }
   end
 
+  # dampen partials higher than a certain frequency using a smooth
+  # "ease-in-out" shape
   def self.scale_partial(partial_index, partial_count, partial_value)
-#    exponent = 2
-#    x = partial_index.to_f / partial_count
-#    partial_value * (1 - (-1**exponent)*Math.cos((x+1)*Math::PI/2)**exponent)
     partial_value * (Math.cos(partial_index.to_f*Math::PI/2/partial_count)**2)
   end
 end
